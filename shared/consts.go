@@ -10,4 +10,5 @@ const (
 	CONTROLLER_HOME                    = "home"
 	CONTROLLER_TASK_QUEUE_MANAGER      = "task-queue-manager"
 	CONTROLLER_TASK_DEFINITION_MANAGER = "task-definition-manager"
+	CONTROLLER_SCHEDULE_MANAGER        = "schedule-manager"
 )

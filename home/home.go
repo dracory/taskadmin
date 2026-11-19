@@ -84,6 +84,7 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 		const urlLoadStats = '` + shared.URL(r, shared.CONTROLLER_HOME, map[string]string{"action": actionLoadStats}) + `';
 		const urlTaskQueue = '` + shared.URL(r, shared.CONTROLLER_TASK_QUEUE_MANAGER, nil) + `';
 		const urlTaskDefinitions = '` + shared.URL(r, shared.CONTROLLER_TASK_DEFINITION_MANAGER, nil) + `';
+		const urlSchedules = '` + shared.URL(r, shared.CONTROLLER_SCHEDULE_MANAGER, nil) + `';
 	`)
 
 	vueContainer := hb.Div().
@@ -126,12 +127,19 @@ func (u *ui) handleLoadStats(w http.ResponseWriter, r *http.Request) string {
 		definitionCount = 0
 	}
 
+	scheduleCount, err := u.Store().ScheduleCount(ctx, taskstore.NewScheduleQuery().SetLimit(0))
+	if err != nil {
+		u.Logger().Error("Failed to count schedules", "error", err)
+		scheduleCount = 0
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(api.SuccessWithData("Stats loaded successfully", map[string]any{
 		"queued_count":     queuedCount,
 		"running_count":    runningCount,
 		"failed_count":     failedCount,
 		"definition_count": definitionCount,
+		"schedule_count":   scheduleCount,
 	}).ToString()))
 	return ""
 }

@@ -41,6 +41,11 @@ func (l *Links) TaskDefinitions(params map[string]string) string {
 	return l.url(CONTROLLER_TASK_DEFINITION_MANAGER, params)
 }
 
+// Schedules builds the URL for the schedule manager controller
+func (l *Links) Schedules(params map[string]string) string {
+	return l.url(CONTROLLER_SCHEDULE_MANAGER, params)
+}
+
 // url builds a controller URL on the task admin endpoint
 func (l *Links) url(controller string, params map[string]string) string {
 	if params == nil {

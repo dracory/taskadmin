@@ -27,6 +27,8 @@ func SectionNav(r *http.Request, store taskstore.StoreInterface, logger *slog.Lo
 		active = "queue"
 	case CONTROLLER_TASK_DEFINITION_MANAGER:
 		active = "definitions"
+	case CONTROLLER_SCHEDULE_MANAGER:
+		active = "schedules"
 	}
 
 	count := func(query func() (int64, error)) int {
@@ -63,10 +65,14 @@ func SectionNav(r *http.Request, store taskstore.StoreInterface, logger *slog.Lo
 	definitionCount := count(func() (int64, error) {
 		return store.TaskDefinitionCount(context.Background(), taskstore.TaskDefinitionQuery())
 	})
+	scheduleCount := count(func() (int64, error) {
+		return store.ScheduleCount(context.Background(), taskstore.NewScheduleQuery().SetLimit(0))
+	})
 
 	return hb.UL().Class("nav nav-pills mb-3").Children([]hb.TagInterface{
 		tab("Dashboard", "dashboard", linksHelper.Home(nil), -1),
 		tab("Task Queue", "queue", linksHelper.TaskQueue(nil), queueCount),
 		tab("Task Definitions", "definitions", linksHelper.TaskDefinitions(nil), definitionCount),
+		tab("Schedules", "schedules", linksHelper.Schedules(nil), scheduleCount),
 	})
 }

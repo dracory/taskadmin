@@ -13,6 +13,7 @@ import (
 
 	"github.com/dracory/req"
 	"github.com/dracory/taskadmin/home"
+	"github.com/dracory/taskadmin/schedule_manager"
 	"github.com/dracory/taskadmin/shared"
 	"github.com/dracory/taskadmin/task_definition_manager"
 	"github.com/dracory/taskadmin/task_queue_manager"
@@ -134,6 +135,9 @@ func (a *admin) buildRoutes() map[string]func(w http.ResponseWriter, r *http.Req
 		shared.CONTROLLER_TASK_QUEUE_MANAGER: func(w http.ResponseWriter, r *http.Request) { task_queue_manager.UI(uiConfig).TaskQueueManager(w, r) },
 		shared.CONTROLLER_TASK_DEFINITION_MANAGER: func(w http.ResponseWriter, r *http.Request) {
 			task_definition_manager.UI(uiConfig).TaskDefinitionManager(w, r)
+		},
+		shared.CONTROLLER_SCHEDULE_MANAGER: func(w http.ResponseWriter, r *http.Request) {
+			schedule_manager.UI(uiConfig).ScheduleManager(w, r)
 		},
 	}
 }

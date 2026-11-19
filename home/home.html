@@ -1,6 +1,6 @@
 <div id="app">
   <div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md">
       <div class="card h-100 border-0 shadow-sm" style="background-color: #e3f2fd;">
         <div class="card-body text-center">
           <i class="bi bi-hourglass-split fs-1 text-primary mb-2"></i>
@@ -10,7 +10,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md">
       <div class="card h-100 border-0 shadow-sm" style="background-color: #fff3e0;">
         <div class="card-body text-center">
           <i class="bi bi-play-circle fs-1 mb-2" style="color: #ff9800;"></i>
@@ -20,7 +20,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md">
       <div class="card h-100 border-0 shadow-sm" style="background-color: #ffebee;">
         <div class="card-body text-center">
           <i class="bi bi-exclamation-triangle fs-1 text-danger mb-2"></i>
@@ -30,13 +30,23 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md">
       <div class="card h-100 border-0 shadow-sm" style="background-color: #e8f5e9;">
         <div class="card-body text-center">
           <i class="bi bi-list-check fs-1 text-success mb-2"></i>
           <h3 class="card-title">{{ stats.definition_count || 0 }}</h3>
           <p class="card-text text-muted">Task Definitions</p>
           <a :href="urlTaskDefinitions" class="btn btn-success btn-sm">Manage Definitions</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md">
+      <div class="card h-100 border-0 shadow-sm" style="background-color: #f3e5f5;">
+        <div class="card-body text-center">
+          <i class="bi bi-calendar-check fs-1 mb-2" style="color: #9c27b0;"></i>
+          <h3 class="card-title">{{ stats.schedule_count || 0 }}</h3>
+          <p class="card-text text-muted">Schedules</p>
+          <a :href="urlSchedules" class="btn btn-secondary btn-sm">Manage Schedules</a>
         </div>
       </div>
     </div>

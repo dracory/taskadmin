@@ -7,10 +7,12 @@ createApp({
         queued_count: 0,
         running_count: 0,
         failed_count: 0,
-        definition_count: 0
+        definition_count: 0,
+        schedule_count: 0
       },
       urlTaskQueue: urlTaskQueue,
-      urlTaskDefinitions: urlTaskDefinitions
+      urlTaskDefinitions: urlTaskDefinitions,
+      urlSchedules: urlSchedules
     };
   },
   mounted() {

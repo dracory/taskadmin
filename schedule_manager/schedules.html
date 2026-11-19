@@ -1,0 +1,262 @@
+<div id="app">
+  <template v-if="loading">
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading data...</span>
+      </div>
+    </div>
+  </template>
+
+  <template v-else>
+    <!-- Filter Bar -->
+    <div class="card bg-body-tertiary mb-3">
+      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <input
+            v-model="filterName"
+            type="text"
+            class="form-control form-control-sm"
+            style="width: 180px;"
+            placeholder="Filter by name"
+            @keyup.enter="applyFilters"
+          >
+          <select v-model="filterStatus" class="form-select form-select-sm" style="width: 140px;">
+            <option value="">All statuses</option>
+            <option value="draft">draft</option>
+            <option value="active">active</option>
+            <option value="inactive">inactive</option>
+          </select>
+          <select v-model="filterDefinitionId" class="form-select form-select-sm" style="width: 220px;">
+            <option value="">All task definitions</option>
+            <option v-for="d in taskDefinitions" :key="d.id" :value="d.id">{{ d.title }}</option>
+          </select>
+          <input
+            v-model="filterQueueName"
+            type="text"
+            class="form-control form-control-sm"
+            style="width: 140px;"
+            placeholder="Queue name"
+            @keyup.enter="applyFilters"
+          >
+          <button class="btn btn-primary btn-sm" @click="applyFilters">
+            <i class="bi bi-funnel me-1"></i> Apply
+          </button>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            title="Clear all filters"
+            v-if="hasActiveFilters"
+            @click="clearFilters"
+          >
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+        <button class="btn btn-primary btn-sm" @click="openCreateModal">
+          <i class="bi bi-plus-circle me-1"></i> New Schedule
+        </button>
+      </div>
+    </div>
+
+    <!-- Schedules Table -->
+    <div v-if="schedules.length === 0" class="text-center py-4 text-muted border rounded">
+      No schedules found matching your criteria.
+    </div>
+
+    <div v-else class="table-responsive">
+      <table class="table table-striped table-hover table-bordered align-middle">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th style="width: 1px; white-space: nowrap;">Status</th>
+            <th>Task Definition</th>
+            <th style="width: 1px; white-space: nowrap;">Queue</th>
+            <th>Recurrence</th>
+            <th style="width: 1px; white-space: nowrap;">Next Run</th>
+            <th style="width: 1px; white-space: nowrap;">Runs</th>
+            <th style="width: 1px; white-space: nowrap;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="schedule in schedules" :key="schedule.id">
+            <td>
+              {{ schedule.name }}
+              <div v-if="schedule.description" class="text-muted small">{{ truncate(schedule.description, 60) }}</div>
+            </td>
+            <td>
+              <span class="badge" :class="statusBadgeClass(schedule.status)">{{ schedule.status }}</span>
+            </td>
+            <td>{{ schedule.task_definition || schedule.task_definition_id }}</td>
+            <td><code>{{ schedule.queue_name }}</code></td>
+            <td>{{ recurrenceLabel(schedule) }}</td>
+            <td>{{ formatDate(schedule.next_run_at) }}</td>
+            <td>{{ schedule.execution_count }}<template v-if="schedule.max_execution_count > 0"> / {{ schedule.max_execution_count }}</template></td>
+            <td class="text-nowrap">
+              <button
+                class="btn btn-sm btn-outline-secondary me-1"
+                @click="openEditModal(schedule)"
+                title="Edit"
+              >
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                @click="deleteSchedule(schedule)"
+                title="Delete"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3" v-if="totalPages > 1">
+      <div class="text-muted">
+        Showing {{ schedules.length }} of {{ totalSchedules }} schedules
+      </div>
+      <nav>
+        <ul class="pagination mb-0">
+          <li class="page-item" :class="{ disabled: currentPage === 0 }">
+            <button class="page-link" @click="goToPage(currentPage - 1)" :disabled="currentPage === 0">Previous</button>
+          </li>
+          <li class="page-item" v-for="page in pageNumbers" :key="page" :class="{ active: page === currentPage }">
+            <button class="page-link" @click="goToPage(page)">{{ page + 1 }}</button>
+          </li>
+          <li class="page-item" :class="{ disabled: currentPage >= totalPages - 1 }">
+            <button class="page-link" @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1">Next</button>
+          </li>
+        </ul>
+      </nav>
+      <div>
+        <select v-model="perPage" @change="changePerPage" class="form-select form-select-sm" style="width: auto;">
+          <option :value="10">10 per page</option>
+          <option :value="25">25 per page</option>
+          <option :value="50">50 per page</option>
+          <option :value="100">100 per page</option>
+        </select>
+      </div>
+    </div>
+  </template>
+
+  <!-- Create / Edit Modal -->
+  <div v-if="showEditModal" class="modal d-block" style="background: rgba(0,0,0,0.5);" @click.self="showEditModal = false">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editForm.id ? 'Update Schedule' : 'Create Schedule' }}</h5>
+          <button type="button" class="btn-close" @click="showEditModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Name</label>
+              <input v-model="editForm.name" type="text" class="form-control" placeholder="Schedule name">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <select v-model="editForm.status" class="form-select">
+                <option value="draft">draft</option>
+                <option value="active">active</option>
+                <option value="inactive">inactive</option>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Task Definition</label>
+              <select v-model="editForm.task_definition_id" class="form-select">
+                <option value="">-- select task definition --</option>
+                <option v-for="d in taskDefinitions" :key="d.id" :value="d.id">{{ d.title }} ({{ d.alias }})</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Queue Name</label>
+              <input v-model="editForm.queue_name" type="text" class="form-control" placeholder="default">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea v-model="editForm.description" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="col-12"><hr class="my-1"><h6>Recurrence</h6></div>
+
+            <div class="col-md-4">
+              <label class="form-label">Frequency</label>
+              <select v-model="editForm.frequency" class="form-select">
+                <option value="none">once (no recurrence)</option>
+                <option value="secondly">secondly</option>
+                <option value="minutely">minutely</option>
+                <option value="hourly">hourly</option>
+                <option value="daily">daily</option>
+                <option value="weekly">weekly</option>
+                <option value="monthly">monthly</option>
+                <option value="yearly">yearly</option>
+              </select>
+            </div>
+            <div class="col-md-4" v-if="editForm.frequency !== 'none'">
+              <label class="form-label">Every (interval)</label>
+              <input v-model.number="editForm.interval" type="number" min="1" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Max Executions (0 = unlimited)</label>
+              <input v-model.number="editForm.max_execution_count" type="number" min="0" class="form-control">
+            </div>
+
+            <div class="col-12" v-if="editForm.frequency === 'weekly'">
+              <label class="form-label">Days of Week</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check" v-for="day in daysOfWeekOptions" :key="day.value">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :id="'dow-' + day.value"
+                    :value="day.value"
+                    v-model="editForm.days_of_week"
+                  >
+                  <label class="form-check-label" :for="'dow-' + day.value">{{ day.label }}</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6" v-if="editForm.frequency === 'monthly' || editForm.frequency === 'yearly'">
+              <label class="form-label">Days of Month (comma-separated)</label>
+              <input v-model="daysOfMonthInput" type="text" class="form-control" placeholder="e.g. 1, 15">
+            </div>
+
+            <div class="col-md-6" v-if="editForm.frequency === 'yearly'">
+              <label class="form-label">Months of Year</label>
+              <select v-model="editForm.months_of_year" multiple class="form-select" size="4">
+                <option v-for="m in monthsOfYearOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Start At (UTC)</label>
+              <input v-model="editForm.start_at" type="datetime-local" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End At (UTC, optional)</label>
+              <input v-model="editForm.end_at" type="datetime-local" class="form-control">
+            </div>
+
+            <div class="col-12"><hr class="my-1"><h6>Task Parameters</h6></div>
+            <div class="col-12">
+              <textarea
+                v-model="taskParametersInput"
+                class="form-control font-monospace"
+                rows="4"
+                placeholder='{"key": "value"}'
+              ></textarea>
+              <div class="form-text">JSON object passed to the task when it is enqueued.</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" @click="showEditModal = false">Cancel</button>
+          <button class="btn btn-primary" @click="saveSchedule" :disabled="saving">
+            {{ saving ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
