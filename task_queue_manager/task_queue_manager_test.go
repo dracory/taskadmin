@@ -186,3 +186,54 @@ func Test_taskUpdateParams(t *testing.T) {
 		t.Errorf("expected updated parameters, got %s", reloaded.GetParameters())
 	}
 }
+
+func Test_loadTasks_filterByTaskName(t *testing.T) {
+	env := newTestEnv(t)
+	env.seedDefinition(t, "alpha-send-email")
+	env.seedDefinition(t, "beta-generate-report")
+	env.seedQueueTask(t, "alpha-send-email")
+	env.seedQueueTask(t, "beta-generate-report")
+
+	w := env.post(t, "load-tasks", map[string]any{
+		"page":     0,
+		"per_page": 10,
+		"conditions": []map[string]string{
+			{"field": "task_name", "operator": "contains", "value": "report"},
+		},
+	})
+
+	var resp struct {
+		Status string `json:"status"`
+		Data   struct {
+			Tasks []map[string]any `json:"tasks"`
+			Total int              `json:"total"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON response: %v", err)
+	}
+	if resp.Data.Total != 1 || len(resp.Data.Tasks) != 1 {
+		t.Fatalf("expected 1 matching task, got %s", w.Body.String())
+	}
+	if resp.Data.Tasks[0]["task_title"] != "Definition beta-generate-report" {
+		t.Errorf("expected matching task title, got %v", resp.Data.Tasks[0])
+	}
+}
+
+func Test_loadTasks_filterByTaskName_noMatch(t *testing.T) {
+	env := newTestEnv(t)
+	env.seedDefinition(t, "alpha-task")
+	env.seedQueueTask(t, "alpha-task")
+
+	w := env.post(t, "load-tasks", map[string]any{
+		"page":     0,
+		"per_page": 10,
+		"conditions": []map[string]string{
+			{"field": "task_name", "operator": "contains", "value": "nonexistent"},
+		},
+	})
+
+	if !strings.Contains(w.Body.String(), `"total":0`) {
+		t.Errorf("expected empty result, got %s", w.Body.String())
+	}
+}

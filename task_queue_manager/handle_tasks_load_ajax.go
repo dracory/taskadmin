@@ -63,7 +63,16 @@ func (u *ui) handleLoadTasks(w http.ResponseWriter, r *http.Request) string {
 		query.SetCreatedAtLte(reqBody.CreatedTo + " 23:59:59")
 	}
 
-	applyConditions(query, reqBody.Conditions)
+	if !applyConditions(ctx, store, query, reqBody.Conditions) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(api.SuccessWithData("Tasks loaded successfully", map[string]any{
+			"tasks":    []map[string]any{},
+			"total":    0,
+			"page":     reqBody.Page,
+			"per_page": reqBody.PerPage,
+		}).ToString()))
+		return ""
+	}
 
 	tasks, err := store.TaskQueueList(ctx, query)
 	if err != nil {
@@ -81,11 +90,35 @@ func (u *ui) handleLoadTasks(w http.ResponseWriter, r *http.Request) string {
 		return ""
 	}
 
+	definitions := map[string]taskstore.TaskDefinitionInterface{}
+	definitionFor := func(taskID string) taskstore.TaskDefinitionInterface {
+		if taskID == "" {
+			return nil
+		}
+		if definition, ok := definitions[taskID]; ok {
+			return definition
+		}
+		definition, err := store.TaskDefinitionFindByID(ctx, taskID)
+		if err != nil {
+			u.Logger().Error("Failed to load task definition", "task_id", taskID, "error", err)
+		}
+		definitions[taskID] = definition
+		return definition
+	}
+
 	taskList := []map[string]any{}
 	for _, task := range tasks {
+		taskTitle := ""
+		taskAlias := ""
+		if definition := definitionFor(task.GetTaskID()); definition != nil {
+			taskTitle = definition.GetTitle()
+			taskAlias = definition.GetAlias()
+		}
 		taskList = append(taskList, map[string]any{
 			"id":         task.GetID(),
 			"task_id":    task.GetTaskID(),
+			"task_title": taskTitle,
+			"task_alias": taskAlias,
 			"status":     task.GetStatus(),
 			"attempts":   task.GetAttempts(),
 			"created_at": task.GetCreatedAt(),

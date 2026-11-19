@@ -1,0 +1,44 @@
+<div id="app">
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm" style="background-color: #e3f2fd;">
+        <div class="card-body text-center">
+          <i class="bi bi-hourglass-split fs-1 text-primary mb-2"></i>
+          <h3 class="card-title">{{ stats.queued_count || 0 }}</h3>
+          <p class="card-text text-muted">Queued Tasks</p>
+          <a :href="urlTaskQueue" class="btn btn-primary btn-sm">Manage Queue</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm" style="background-color: #fff3e0;">
+        <div class="card-body text-center">
+          <i class="bi bi-play-circle fs-1 mb-2" style="color: #ff9800;"></i>
+          <h3 class="card-title">{{ stats.running_count || 0 }}</h3>
+          <p class="card-text text-muted">Running Tasks</p>
+          <a :href="urlTaskQueue" class="btn btn-warning btn-sm">View Queue</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm" style="background-color: #ffebee;">
+        <div class="card-body text-center">
+          <i class="bi bi-exclamation-triangle fs-1 text-danger mb-2"></i>
+          <h3 class="card-title">{{ stats.failed_count || 0 }}</h3>
+          <p class="card-text text-muted">Failed Tasks</p>
+          <a :href="urlTaskQueue" class="btn btn-danger btn-sm">Review Queue</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm" style="background-color: #e8f5e9;">
+        <div class="card-body text-center">
+          <i class="bi bi-list-check fs-1 text-success mb-2"></i>
+          <h3 class="card-title">{{ stats.definition_count || 0 }}</h3>
+          <p class="card-text text-muted">Task Definitions</p>
+          <a :href="urlTaskDefinitions" class="btn btn-success btn-sm">Manage Definitions</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

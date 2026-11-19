@@ -7,7 +7,7 @@ require (
 	github.com/dracory/cdn v1.13.0
 	github.com/dracory/hb v1.88.0
 	github.com/dracory/req v0.1.0
-	github.com/dracory/taskstore v1.37.0
+	github.com/dracory/taskstore v1.37.1
 	github.com/samber/lo v1.53.0
 	github.com/spf13/cast v1.10.0
 	modernc.org/sqlite v1.62.0

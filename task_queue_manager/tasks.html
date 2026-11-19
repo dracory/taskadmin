@@ -84,7 +84,11 @@
         <tbody>
           <tr v-for="task in tasks" :key="task.id">
             <td><input type="checkbox" :value="task.id" v-model="selectedTasks"></td>
-            <td><code>{{ task.task_id }}</code></td>
+            <td>
+              {{ task.task_title || task.task_alias || task.task_id }}
+              <br>
+              <small class="text-muted">ref. <code>{{ task.task_id }}</code></small>
+            </td>
             <td>
               <span class="badge" :class="statusBadgeClass(task.status)">{{ task.status }}</span>
             </td>

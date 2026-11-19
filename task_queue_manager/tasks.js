@@ -51,6 +51,7 @@ function initTaskQueueManager() {
           ] },
           { value: 'id', label: 'ID', operators: ['equals'], inputType: 'text', placeholder: 'queue id' },
           { value: 'task_id', label: 'Task ID', operators: ['equals'], inputType: 'text', placeholder: 'task definition id' },
+          { value: 'task_name', label: 'Task Name', operators: ['contains'], inputType: 'text', placeholder: 'task name or alias' },
           { value: 'date_from', label: 'Created after', operators: ['equals'], inputType: 'date', placeholder: '' },
           { value: 'date_to', label: 'Created before', operators: ['equals'], inputType: 'date', placeholder: '' },
         ],
