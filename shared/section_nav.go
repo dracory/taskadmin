@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 
@@ -59,20 +58,36 @@ func SectionNav(r *http.Request, store taskstore.StoreInterface, logger *slog.Lo
 		return hb.LI().Class("nav-item").Child(link)
 	}
 
+	ctx := r.Context()
 	queueCount := count(func() (int64, error) {
-		return store.TaskQueueCount(context.Background(), taskstore.TaskQueueQuery())
+		return store.TaskQueueCount(ctx, taskstore.TaskQueueQuery())
 	})
 	definitionCount := count(func() (int64, error) {
-		return store.TaskDefinitionCount(context.Background(), taskstore.TaskDefinitionQuery())
+		return store.TaskDefinitionCount(ctx, taskstore.TaskDefinitionQuery())
 	})
 	scheduleCount := count(func() (int64, error) {
-		return store.ScheduleCount(context.Background(), taskstore.NewScheduleQuery().SetLimit(0))
+		return store.ScheduleCount(ctx, taskstore.NewScheduleQuery().SetLimit(0))
 	})
 
-	return hb.UL().Class("nav nav-pills mb-3").Children([]hb.TagInterface{
-		tab("Dashboard", "dashboard", linksHelper.Home(nil), -1),
-		tab("Task Queue", "queue", linksHelper.TaskQueue(nil), queueCount),
-		tab("Task Definitions", "definitions", linksHelper.TaskDefinitions(nil), definitionCount),
-		tab("Schedules", "schedules", linksHelper.Schedules(nil), scheduleCount),
-	})
+	ulNav := hb.UL().
+		Class("nav nav-pills p-1 justify-content-center flex-grow-1").
+		Children([]hb.TagInterface{
+			tab("Dashboard", "dashboard", linksHelper.Home(nil), -1),
+			tab("Task Queue", "queue", linksHelper.TaskQueue(nil), queueCount),
+			tab("Task Definitions", "definitions", linksHelper.TaskDefinitions(nil), definitionCount),
+			tab("Schedules", "schedules", linksHelper.Schedules(nil), scheduleCount),
+		})
+
+	label := hb.Span().
+		Class("fw-bolder text-uppercase ms-3 me-3").
+		Text("Tasks").
+		Child(hb.I().Class("bi bi-chevron-right ms-2"))
+
+	return hb.Div().
+		Class("card card-default mt-3 mb-4 bg-primary-subtle").
+		Child(hb.Div().
+			Class("card-body d-flex align-items-center").
+			Style("padding: 2px;").
+			Child(label).
+			Child(ulNav))
 }
