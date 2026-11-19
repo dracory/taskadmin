@@ -96,9 +96,9 @@ func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
 	content := hb.Div().
 		Class("container").
 		Class("py-4").
+		Child(shared.SectionNav(r, u.Store(), u.Logger())).
 		Child(breadcrumbs).
 		Child(shared.PageHeader("Tasks. Dashboard")).
-		Child(shared.SectionNav(r, u.Store(), u.Logger())).
 		Child(vueContainer)
 
 	return u.Layout()(w, r, "Dashboard | Tasks", content.ToHTML(), shared.LayoutOptions{})
