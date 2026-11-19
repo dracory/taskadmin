@@ -1,24 +1,27 @@
 # taskadmin
 
 Standalone admin interface for [taskstore](https://github.com/dracory/taskstore),
-following the folder-per-controller pattern used by `shopadmin` and `cmsstore/admin`.
+following the folder-per-controller pattern used by `shopadmin`.
 
 Extracted from `github.com/dracory/taskstore/admin`.
 
 ## Structure
 
 - `taskadmin.go` — `AdminOptions`, `New()`, `Handle()` dispatcher
-- `shared/` — UiConfig/UiBase, Layout interface + default webpage,
-  breadcrumbs, page header, nav tabs, URL/query helpers
+- `shared/` — `UiConfig`/`UiBase`, `FuncLayout` + default layout,
+  breadcrumbs, page header, section nav, URL/query helpers
 - `home/` — dashboard landing page
-- `task_queue_manager/` — queued task list (filters, sorting, actions)
-- `task_queue_create/`, `task_queue_delete/`, `task_queue_details/`,
-  `task_queue_parameters/`, `task_queue_requeue/`,
-  `task_queue_task_restart/` — queued task modals/actions
-- `task_definition_manager/` — task definition list
-- `task_definition_create/`, `task_definition_update/`,
-  `task_definition_delete/` — task definition modals/actions
-- `testutils/` — in-memory SQLite store + mock layout for tests
+- `task_queue_manager/` — queued task manager. Vue page (`tasks.html` +
+  `tasks.js`) plus JSON AJAX handlers (`handle_*_ajax.go`) for loading,
+  enqueueing, restarting, requeueing, deleting, and editing task parameters
+- `task_definition_manager/` — task definition manager. Vue page
+  (`definitions.html` + `definitions.js`) plus JSON AJAX handlers for
+  loading, creating, updating, and deleting definitions
+- `testutils/` — in-memory SQLite store for tests
+
+Each manager is a thin `?action=` dispatcher: with no action it renders the
+page (layout + embedded Vue assets); with an action it returns a JSON
+response via `github.com/dracory/api`.
 
 ## Usage
 
@@ -28,8 +31,9 @@ admin, err := taskadmin.New(taskadmin.AdminOptions{
     Logger: slog.Default(),  // required
 
     // optional
-    FuncLayout: func(r *http.Request) shared.Layout {
-        return myAdminLayout // fresh instance per request
+    FuncLayout: func(w http.ResponseWriter, r *http.Request,
+        webpageTitle, webpageHtml string, options shared.LayoutOptions) string {
+        return myAdminLayout(w, r, webpageTitle, webpageHtml, options)
     },
     AdminHomeURL: "/admin",      // default
     TaskAdminURL: "/admin/task", // default
@@ -44,9 +48,8 @@ if err != nil {
 mux.HandleFunc("/admin/task", admin.Handle)
 ```
 
-Routing is by `?controller=` query parameter
-(`home`, `task-queue-manager`, `task-definition-manager`, and the
-modal/action controllers listed above).
+Routing is by `?controller=` query parameter (`home`, `task-queue-manager`,
+`task-definition-manager`), defaulting to `home`.
 
 ## Testing
 

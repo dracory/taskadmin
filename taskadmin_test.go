@@ -99,13 +99,14 @@ func Test_Handle_unknown_controller_falls_back_to_home(t *testing.T) {
 
 func Test_Handle_with_custom_layout(t *testing.T) {
 	store := testutils.NewStore(t)
-	layout := testutils.NewMockLayout()
+	renderCount := 0
 
 	a, err := New(AdminOptions{
 		Store:  store,
 		Logger: slog.Default(),
-		FuncLayout: func(r *http.Request) shared.Layout {
-			return layout
+		FuncLayout: func(w http.ResponseWriter, r *http.Request, webpageTitle, webpageHtml string, options shared.LayoutOptions) string {
+			renderCount++
+			return "<html><head><title>" + webpageTitle + "</title></head><body>" + webpageHtml + "</body></html>"
 		},
 	})
 	if err != nil {
@@ -120,7 +121,7 @@ func Test_Handle_with_custom_layout(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("Handle() should return 200, got %d", w.Code)
 	}
-	if layout.RenderCount == 0 {
+	if renderCount == 0 {
 		t.Error("Handle() should use the custom layout")
 	}
 }

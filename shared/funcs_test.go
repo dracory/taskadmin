@@ -251,11 +251,8 @@ func Test_DefaultWebpage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			webpage := DefaultWebpage(tt.title, tt.content)
-			if webpage == nil {
-				t.Error("DefaultWebpage() should not return nil")
-			}
-			html := webpage.Render(nil, nil)
+			webpage := webpageForTest(tt.title, tt.content)
+			html := webpage
 			if html == "" {
 				t.Error("DefaultWebpage() should not return empty HTML")
 			}
@@ -598,11 +595,8 @@ func Test_DefaultWebpage_with_various_content(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			webpage := DefaultWebpage(tt.title, tt.content)
-			if webpage == nil {
-				t.Error("DefaultWebpage() should not return nil")
-			}
-			html := webpage.Render(nil, nil)
+			webpage := webpageForTest(tt.title, tt.content)
+			html := webpage
 			if html == "" {
 				t.Error("DefaultWebpage() should not return empty HTML")
 			}
@@ -870,11 +864,8 @@ func Test_query_with_percent(t *testing.T) {
 
 func Test_DefaultWebpage_with_empty_title(t *testing.T) {
 	// Test DefaultWebpage with empty title
-	webpage := DefaultWebpage("", "<p>content</p>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("", "<p>content</p>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -882,11 +873,8 @@ func Test_DefaultWebpage_with_empty_title(t *testing.T) {
 
 func Test_DefaultWebpage_with_nil_content(t *testing.T) {
 	// Test DefaultWebpage with nil content (empty string)
-	webpage := DefaultWebpage("Title", "")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -977,11 +965,8 @@ func Test_sortingIndicator_with_long_column_name(t *testing.T) {
 func Test_DefaultWebpage_with_long_title(t *testing.T) {
 	// Test DefaultWebpage with very long title
 	longTitle := string(make([]byte, 500))
-	webpage := DefaultWebpage(longTitle, "<p>content</p>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest(longTitle, "<p>content</p>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -1317,11 +1302,8 @@ func Test_DefaultWebpage_with_special_chars_in_title(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			webpage := DefaultWebpage(tt.title, tt.content)
-			if webpage == nil {
-				t.Error("DefaultWebpage() should not return nil")
-			}
-			html := webpage.Render(nil, nil)
+			webpage := webpageForTest(tt.title, tt.content)
+			html := webpage
 			if html == "" {
 				t.Error("DefaultWebpage() should not return empty HTML")
 			}
@@ -1562,11 +1544,8 @@ func Test_breadcrumbsUI_with_single_breadcrumb(t *testing.T) {
 
 func Test_DefaultWebpage_with_unicode_title(t *testing.T) {
 	// Test DefaultWebpage with unicode title
-	webpage := DefaultWebpage("日本語のタイトル", "<p>content</p>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("日本語のタイトル", "<p>content</p>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -1574,11 +1553,8 @@ func Test_DefaultWebpage_with_unicode_title(t *testing.T) {
 
 func Test_DefaultWebpage_with_emoji_title(t *testing.T) {
 	// Test DefaultWebpage with emoji in title
-	webpage := DefaultWebpage("Test 🎉 Example", "<p>content</p>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Test 🎉 Example", "<p>content</p>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -1948,11 +1924,8 @@ func Test_sortingIndicator_with_unicode_column(t *testing.T) {
 
 func Test_DefaultWebpage_with_script_content(t *testing.T) {
 	// Test DefaultWebpage with script content
-	webpage := DefaultWebpage("Title", "<script>alert('test');</script>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<script>alert('test');</script>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -1960,11 +1933,8 @@ func Test_DefaultWebpage_with_script_content(t *testing.T) {
 
 func Test_DefaultWebpage_with_style_content(t *testing.T) {
 	// Test DefaultWebpage with style content
-	webpage := DefaultWebpage("Title", "<style>.test{color:red;}</style>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<style>.test{color:red;}</style>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -1972,11 +1942,8 @@ func Test_DefaultWebpage_with_style_content(t *testing.T) {
 
 func Test_DefaultWebpage_with_form_content(t *testing.T) {
 	// Test DefaultWebpage with form content
-	webpage := DefaultWebpage("Title", "<form><input type='text'></form>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<form><input type='text'></form>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2150,11 +2117,8 @@ func Test_breadcrumbsUI_with_special_chars_in_url(t *testing.T) {
 
 func Test_DefaultWebpage_with_table_content(t *testing.T) {
 	// Test DefaultWebpage with table content
-	webpage := DefaultWebpage("Title", "<table><tr><td>Cell</td></tr></table>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<table><tr><td>Cell</td></tr></table>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2162,11 +2126,8 @@ func Test_DefaultWebpage_with_table_content(t *testing.T) {
 
 func Test_DefaultWebpage_with_div_content(t *testing.T) {
 	// Test DefaultWebpage with div content
-	webpage := DefaultWebpage("Title", "<div class='container'>Content</div>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<div class='container'>Content</div>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2174,11 +2135,8 @@ func Test_DefaultWebpage_with_div_content(t *testing.T) {
 
 func Test_DefaultWebpage_with_ul_content(t *testing.T) {
 	// Test DefaultWebpage with unordered list content
-	webpage := DefaultWebpage("Title", "<ul><li>Item 1</li><li>Item 2</li></ul>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<ul><li>Item 1</li><li>Item 2</li></ul>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2186,11 +2144,8 @@ func Test_DefaultWebpage_with_ul_content(t *testing.T) {
 
 func Test_DefaultWebpage_with_ol_content(t *testing.T) {
 	// Test DefaultWebpage with ordered list content
-	webpage := DefaultWebpage("Title", "<ol><li>Item 1</li><li>Item 2</li></ol>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", "<ol><li>Item 1</li><li>Item 2</li></ol>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2314,11 +2269,8 @@ func Test_breadcrumbsUI_with_very_long_name_and_url(t *testing.T) {
 func Test_DefaultWebpage_with_very_long_content(t *testing.T) {
 	// Test DefaultWebpage with very long content
 	longContent := string(make([]byte, 5000))
-	webpage := DefaultWebpage("Title", longContent)
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("Title", longContent)
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2327,11 +2279,8 @@ func Test_DefaultWebpage_with_very_long_content(t *testing.T) {
 func Test_DefaultWebpage_with_very_long_title(t *testing.T) {
 	// Test DefaultWebpage with very long title
 	longTitle := string(make([]byte, 500))
-	webpage := DefaultWebpage(longTitle, "<p>content</p>")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest(longTitle, "<p>content</p>")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2504,11 +2453,8 @@ func Test_httpBuildQuery_with_empty_string_values(t *testing.T) {
 
 func Test_DefaultWebpage_with_empty_title_and_content(t *testing.T) {
 	// Test DefaultWebpage with both empty title and content
-	webpage := DefaultWebpage("", "")
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest("", "")
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2699,11 +2645,8 @@ func Test_DefaultWebpage_with_very_long_title_and_content(t *testing.T) {
 	// Test DefaultWebpage with very long title and content
 	longTitle := string(make([]byte, 500))
 	longContent := string(make([]byte, 5000))
-	webpage := DefaultWebpage(longTitle, longContent)
-	if webpage == nil {
-		t.Error("DefaultWebpage() should not return nil")
-	}
-	html := webpage.Render(nil, nil)
+	webpage := webpageForTest(longTitle, longContent)
+	html := webpage
 	if html == "" {
 		t.Error("DefaultWebpage() should not return empty HTML")
 	}
@@ -2955,4 +2898,9 @@ func Test_isJSON_with_null_values_in_objects(t *testing.T) {
 			}
 		})
 	}
+}
+
+// webpageForTest renders the default layout for tests
+func webpageForTest(title, content string) string {
+	return Layout(nil, nil, title, content, LayoutOptions{})
 }

@@ -1,11 +1,11 @@
 package home
 
 import (
-	"github.com/dracory/taskadmin/shared"
 	"net/http"
 
 	"github.com/dracory/cdn"
 	"github.com/dracory/hb"
+	"github.com/dracory/taskadmin/shared"
 )
 
 // UiInterface defines the home controller's UI interface
@@ -26,71 +26,40 @@ func UI(config shared.UiConfig) UiInterface {
 
 // Home handles the home controller requests
 func (u *ui) Home(w http.ResponseWriter, r *http.Request) {
-	shared.WriteTag(w, u.ToTag(w, r))
+	html := u.Handler(w, r)
+	if html != "" {
+		if w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		}
+		// #nosec G705 -- html is rendered by the page builder, not user input
+		_, _ = w.Write([]byte(html))
+	}
 }
 
-func (c *ui) ToTag(w http.ResponseWriter, r *http.Request) hb.TagInterface {
-	layout := c.Layout(r)
-	data, errorMessage := c.prepareData(r)
+// Handler processes the home controller request and returns HTML
+func (u *ui) Handler(w http.ResponseWriter, r *http.Request) string {
+	return u.renderPage(w, r)
+}
 
-	layout.SetTitle("Dashboard | Tasks")
-
-	if errorMessage != "" {
-		layout.SetBody(hb.Div().
-			Class("alert alert-danger").
-			Text(errorMessage).ToHTML())
-
-		return hb.Raw(layout.Render(w, r))
+func (u *ui) renderPage(w http.ResponseWriter, r *http.Request) string {
+	if u.Store() == nil {
+		return shared.ErrorAlert("Task store is not initialized")
 	}
 
-	htmxScript := `setTimeout(() => async function() {
-		if (!window.htmx) {
-			let script = document.createElement('script');
-			document.head.appendChild(script);
-			script.type = 'text/javascript';
-			script.src = '` + cdn.Htmx_2_0_0() + `';
-			await script.onload
-		}
-	}, 1000);`
-
-	swalScript := `setTimeout(() => async function() {
-		if (!window.Swal) {
-			let script = document.createElement('script');
-			document.head.appendChild(script);
-			script.type = 'text/javascript';
-			script.src = '` + cdn.Sweetalert2_11() + `';
-			await script.onload
-		}
-	}, 1000);`
-
-	layout.SetBody(c.page(data).ToHTML())
-	layout.SetScripts([]string{htmxScript, swalScript})
-
-	return hb.Raw(layout.Render(w, r))
-}
-
-func (controller *ui) page(data homeControllerData) hb.TagInterface {
-	adminHeader := shared.AdminHeader(controller.Store(), controller.Logger(), data.request)
-	breadcrumbs := shared.Breadcrumbs(data.request, []shared.Breadcrumb{
-		{
-			Name: "Dashboard",
-			URL:  "",
-		},
+	breadcrumbs := shared.Breadcrumbs(r, []shared.Breadcrumb{
+		{Name: "Dashboard", URL: ""},
 	})
 
-	return hb.Div().
-		Class("container py-4").
+	content := hb.Div().
+		Class("container").
+		Class("py-4").
 		Child(breadcrumbs).
 		Child(shared.PageHeader("Tasks. Dashboard")).
-		Child(adminHeader)
-}
+		Child(shared.SectionNav(r, u.Store(), u.Logger()))
 
-func (controller *ui) prepareData(r *http.Request) (data homeControllerData, errorMessage string) {
-	data.request = r
-
-	return data, ""
-}
-
-type homeControllerData struct {
-	request *http.Request
+	return u.Layout()(w, r, "Dashboard | Tasks", content.ToHTML(), shared.LayoutOptions{
+		ScriptURLs: []string{
+			cdn.VueJs_3(),
+		},
+	})
 }

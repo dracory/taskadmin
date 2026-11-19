@@ -14,25 +14,12 @@ import (
 	"github.com/dracory/req"
 	"github.com/dracory/taskadmin/home"
 	"github.com/dracory/taskadmin/shared"
-	"github.com/dracory/taskadmin/task_definition_create"
-	"github.com/dracory/taskadmin/task_definition_delete"
 	"github.com/dracory/taskadmin/task_definition_manager"
-	"github.com/dracory/taskadmin/task_definition_update"
-	"github.com/dracory/taskadmin/task_queue_create"
-	"github.com/dracory/taskadmin/task_queue_delete"
-	"github.com/dracory/taskadmin/task_queue_details"
 	"github.com/dracory/taskadmin/task_queue_manager"
-	"github.com/dracory/taskadmin/task_queue_parameters"
-	"github.com/dracory/taskadmin/task_queue_requeue"
-	"github.com/dracory/taskadmin/task_queue_task_restart"
 	"github.com/dracory/taskstore"
 )
 
 // AdminOptions contains all dependencies and configuration for the task admin.
-//
-// Store and Logger are required and replace the in-repo version's
-// UIOptions fields. Layout is supplied per-request via FuncLayout
-// (optional — a default Bootstrap page is used when nil).
 type AdminOptions struct {
 	// Store is the taskstore.StoreInterface (required)
 	Store taskstore.StoreInterface
@@ -40,11 +27,12 @@ type AdminOptions struct {
 	// Logger is required
 	Logger *slog.Logger
 
-	// FuncLayout returns a fresh shared.Layout for each request.
-	// Optional — when nil, a default bare-bones Bootstrap page is used.
-	// The returned layout is stateful (SetTitle/SetBody/SetScripts/Render)
-	// and must not be shared across requests.
-	FuncLayout func(r *http.Request) shared.Layout
+	// FuncLayout is an optional function to render the admin interface
+	// inside your own layout (branding, menus, etc.). It receives the
+	// request and response writer so the host project can access request
+	// context (auth user, locale, etc.) when rendering the layout.
+	// If nil, a default bare-bones HTML page is used (Bootstrap CDN).
+	FuncLayout shared.FuncLayout
 
 	// AdminHomeURL is the URL for the admin home page (default: "/admin")
 	AdminHomeURL string
@@ -67,7 +55,7 @@ type AdminInterface interface {
 type admin struct {
 	store        taskstore.StoreInterface
 	logger       *slog.Logger
-	funcLayout   func(r *http.Request) shared.Layout
+	funcLayout   shared.FuncLayout
 	adminHomeURL string
 	taskAdminURL string
 	authUserID   func(r *http.Request) string
@@ -136,35 +124,49 @@ func (a *admin) Handle(w http.ResponseWriter, r *http.Request) {
 // buildRoutes creates the handler dispatch map once at construction time.
 func (a *admin) buildRoutes() map[string]func(w http.ResponseWriter, r *http.Request) {
 	uiConfig := shared.UiConfig{
-		Store:      a.store,
-		Logger:     a.logger,
-		FuncLayout: a.funcLayout,
+		Store:  a.store,
+		Logger: a.logger,
+		Layout: a.render,
 	}
 
 	return map[string]func(w http.ResponseWriter, r *http.Request){
 		shared.CONTROLLER_HOME:               func(w http.ResponseWriter, r *http.Request) { home.UI(uiConfig).Home(w, r) },
 		shared.CONTROLLER_TASK_QUEUE_MANAGER: func(w http.ResponseWriter, r *http.Request) { task_queue_manager.UI(uiConfig).TaskQueueManager(w, r) },
-		shared.CONTROLLER_TASK_QUEUE_CREATE:  func(w http.ResponseWriter, r *http.Request) { task_queue_create.UI(uiConfig).TaskQueueCreate(w, r) },
-		shared.CONTROLLER_TASK_QUEUE_DELETE:  func(w http.ResponseWriter, r *http.Request) { task_queue_delete.UI(uiConfig).TaskQueueDelete(w, r) },
-		shared.CONTROLLER_TASK_QUEUE_DETAILS: func(w http.ResponseWriter, r *http.Request) { task_queue_details.UI(uiConfig).TaskQueueDetails(w, r) },
-		shared.CONTROLLER_TASK_QUEUE_PARAMETERS: func(w http.ResponseWriter, r *http.Request) {
-			task_queue_parameters.UI(uiConfig).TaskQueueParameters(w, r)
-		},
-		shared.CONTROLLER_TASK_QUEUE_REQUEUE: func(w http.ResponseWriter, r *http.Request) { task_queue_requeue.UI(uiConfig).TaskQueueRequeue(w, r) },
-		shared.CONTROLLER_TASK_QUEUE_TASK_RESTART: func(w http.ResponseWriter, r *http.Request) {
-			task_queue_task_restart.UI(uiConfig).TaskQueueTaskRestart(w, r)
-		},
 		shared.CONTROLLER_TASK_DEFINITION_MANAGER: func(w http.ResponseWriter, r *http.Request) {
 			task_definition_manager.UI(uiConfig).TaskDefinitionManager(w, r)
 		},
-		shared.CONTROLLER_TASK_DEFINITION_CREATE: func(w http.ResponseWriter, r *http.Request) {
-			task_definition_create.UI(uiConfig).TaskDefinitionCreate(w, r)
-		},
-		shared.CONTROLLER_TASK_DEFINITION_UPDATE: func(w http.ResponseWriter, r *http.Request) {
-			task_definition_update.UI(uiConfig).TaskDefinitionUpdate(w, r)
-		},
-		shared.CONTROLLER_TASK_DEFINITION_DELETE: func(w http.ResponseWriter, r *http.Request) {
-			task_definition_delete.UI(uiConfig).TaskDefinitionDelete(w, r)
-		},
 	}
+}
+
+// render wraps content in the layout. If FuncLayout is provided and
+// returns non-empty, it is used; otherwise the default shared.Layout
+// is used (following the shopadmin pattern).
+//
+// When FuncLayout is set, the default shared.Layout is NOT computed.
+func (a *admin) render(w http.ResponseWriter, r *http.Request, webpageTitle, webpageHtml string, options shared.LayoutOptions) string {
+	if a.funcLayout != nil {
+		custom := a.funcLayout(w, r, webpageTitle, webpageHtml, options)
+		if custom != "" {
+			if w != nil {
+				if w.Header().Get("Content-Type") == "" {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				}
+				_, _ = w.Write([]byte(custom))
+				return ""
+			}
+			return custom
+		}
+	}
+
+	webpage := shared.Layout(w, r, webpageTitle, webpageHtml, options)
+
+	if w != nil {
+		if w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		}
+		_, _ = w.Write([]byte(webpage))
+		return ""
+	}
+
+	return webpage
 }
